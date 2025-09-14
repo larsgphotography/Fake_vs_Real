@@ -1,0 +1,13 @@
+﻿ID,fake_path,real_path,comment
+1,fake/fake1.jpg,real/real1.jpg,person added
+2,fake/fake2.jpg,real/real2.jpg,lighthouse added
+3,fake/fake3.jpg,real/real3.jpg,rain added
+4,fake/fake4.jpg,real/real4.jpg,beard added
+5,fake/fake5.jpg,real/real5.jpg,color changed
+6,fake/fake6.jpg,real/real6.jpg,snow added
+7,fake/fake7.jpg,real/real7.jpg,name changed
+8,fake/fake8.jpg,real/real8.jpg,people removed
+9,fake/fake9.jpg,real/real9.jpg,snow added
+10,fake/fake10.jpg,real/real10.jpg,sheep added
+11,fake/fake11.jpg,real/real11.jpg,flowers changed
+12,fake/fake12.jpg,real/real12.jpg,headset added

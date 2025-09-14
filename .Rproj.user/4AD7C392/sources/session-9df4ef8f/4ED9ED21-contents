@@ -1,0 +1,101 @@
+library(shiny)
+library(readr)
+
+# Load and randomize image metadata
+all_data <- read_csv("manipulation_info.csv")
+
+# Pick 10 random entries for the session
+manipulation_info <- all_data[sample(nrow(all_data)), ][1:10, ]
+
+ui <- fluidPage(
+  titlePanel("🕵️‍♂️ Spot the Manipulation"),
+  fluidRow(
+    column(3,
+           wellPanel(
+             h4(textOutput("round_info")),
+             textInput("user_guess", "What was manipulated?"),
+             actionButton("reveal_btn", "Reveal Original"),
+             conditionalPanel(
+               condition = "output.show_original",
+               br(),
+               h5("🔍 Actual manipulation:"),
+               verbatimTextOutput("comment_text"),
+               radioButtons("guess_correct", "Were you correct?", 
+                            choices = c("Yes", "No")),
+               actionButton("next_btn", "Next")
+             )
+           )
+    ),
+    column(9,
+           uiOutput("image_display")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  current_round <- reactiveVal(1)
+  show_original <- reactiveVal(FALSE)
+  results <- reactiveVal(data.frame(guess = character(), correct = logical(), stringsAsFactors = FALSE))
+  
+  observe({
+    output$show_original <- reactive({ show_original() })
+    outputOptions(output, "show_original", suspendWhenHidden = FALSE)
+  })
+  
+  output$round_info <- renderText({
+    paste("Round", current_round(), "of", nrow(manipulation_info))
+  })
+  
+  output$image_display <- renderUI({
+    idx <- current_round()
+    fake_img <- manipulation_info$fake_path[idx]
+    
+    if (show_original()) {
+      real_img <- manipulation_info$real_path[idx]
+      tagList(
+        h4("🔎 Fake vs Real"),
+        fluidRow(
+          column(6, tags$img(src = fake_img, width = "100%", style = "max-height: 400px; object-fit: contain;")),
+          column(6, tags$img(src = real_img, width = "100%", style = "max-height: 400px; object-fit: contain;"))
+        )
+      )
+    } else {
+      tags$img(src = fake_img, width = "100%", style = "max-height: 500px; object-fit: contain;")
+    }
+  })
+  
+  output$comment_text <- renderText({
+    if (show_original()) {
+      manipulation_info$comment[current_round()]
+    }
+  })
+  
+  observeEvent(input$reveal_btn, {
+    show_original(TRUE)
+  })
+  
+  observeEvent(input$next_btn, {
+    res <- data.frame(
+      guess = input$user_guess,
+      correct = input$guess_correct == "Yes",
+      stringsAsFactors = FALSE
+    )
+    results(rbind(results(), res))
+    
+    if (current_round() < nrow(manipulation_info)) {
+      current_round(current_round() + 1)
+      show_original(FALSE)
+      updateTextInput(session, "user_guess", value = "")
+      updateRadioButtons(session, "guess_correct", selected = character(0))
+    } else {
+      showModal(modalDialog(
+        title = "🎉 Game Over",
+        paste("✅ You got", sum(results()$correct), "out of", nrow(manipulation_info), "correct!"),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+    }
+  })
+}
+
+shinyApp(ui, server)
